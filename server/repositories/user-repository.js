@@ -11,15 +11,11 @@ const createUser = async (user) => {
   return results;
 };
 
-const getUserByUsernameAndPasswordAndRole = async (
-  username,
-  password,
-  role
-) => {
+const getUserByUsernameAndPassword = async (username, password) => {
   const [results, metadata] = await dbConnection.query(
-    `SELECT * FROM user WHERE username = ? AND password = ? AND role = ?`,
+    `SELECT * FROM user WHERE username = ? AND password = ?`,
     {
-      replacements: [username, password, role],
+      replacements: [username, password],
     }
   );
   return results;
@@ -61,7 +57,7 @@ const getAllUsers = async () => {
 
 module.exports = {
   createUser,
-  getUserByUsernameAndPasswordAndRole,
+  getUserByUsernameAndPassword,
   updateUser,
   deleteUser,
   getAllUsers,

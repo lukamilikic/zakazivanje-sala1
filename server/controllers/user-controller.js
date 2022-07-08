@@ -6,12 +6,11 @@ const createUser = async (req, res) => {
   res.send({ username });
 };
 
-const getUserByUsernameAndPasswordAndRole = async (req, res) => {
-  const { username, password, role } = req.params;
-  const result = await userRepository.getUserByUsernameAndPasswordAndRole(
+const getUserByUsernameAndPassword = async (req, res) => {
+  const { username, password } = req.params;
+  const result = await userRepository.getUserByUsernameAndPassword(
     username,
-    password,
-    role
+    password
   );
   response.send(result);
 };
@@ -40,43 +39,55 @@ const updateUser = async (req, res) => {
 };
 
 const login = async (request, response) => {
-  const username = request.body.username;
-  const password = request.body.password;
-  const role = request.body.role;
-  const result = await userRepository.getUserByUsernameAndPasswordAndRole(
-    username,
-    password,
-    role
-  );
-  let returnValue = { token: null, msg: null, status: 200 };
-  if (typeof result[0] === "undefined") {
-    returnValue.msg = "Incorrect username/password/role";
-    returnValue.status = 404;
-    response.send(returnValue);
-    return;
-  }
-  let toSend = {
-    personID: result[0].personID,
-    username: result[0].username,
-    password: result[0].password,
-    name: result[0].name,
-    role: result[0].role,
-  };
-  jwt.sign(
-    toSend,
-    "SECRET",
-    (err, token) => {
-      returnValue.token = token;
+  try {
+    const username = request.body.username;
+    const password = request.body.password;
+
+    const result = await userRepository.getUserByUsernameAndPassword(
+      username,
+      password
+    );
+    let returnValue = {
+      token: null,
+      msg: null,
+      status: 200,
+      user: { username: "", password: "", role: "" },
+    };
+    if (typeof result[0] === "undefined") {
+      returnValue.msg = "Incorrect username/password";
+      returnValue.status = 404;
       response.send(returnValue);
-    },
-    { expiresIn: "1h" }
-  );
+      return;
+    }
+
+    let toSend = {
+      personID: result[0].personID,
+      username: result[0].username,
+      password: result[0].password,
+      name: result[0].name,
+      role: result[0].role,
+    };
+    jwt.sign(
+      toSend,
+      "SECRET",
+      (err, token) => {
+        returnValue.token = token;
+        returnValue.user.username = result[0].username;
+        returnValue.user.password = result[0].password;
+        returnValue.user.role = result[0].role;
+        response.send(returnValue);
+      },
+      { expiresIn: "1h" }
+    );
+  } catch (err) {
+    response.send({ error: err.message });
+  }
 };
 
 module.exports = {
   login,
   createUser,
-  getUserByUsernameAndPasswordAndRole,
+  getUserByUsernameAndPassword,
   updateUser,
   deleteUser,
   getAllUsers,
